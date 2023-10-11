@@ -9,17 +9,22 @@
         <outputRelativeToContentRoot value="true" />
         <module name="Presupuesto" />
         <module name="Gasto" />
+        <module name="FileProcessing" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="FileProcessing" target="17" />
       <module name="Gasto" target="17" />
       <module name="Presupuesto" target="17" />
+      <module name="Processing" target="17" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="FileProcessing" options="-parameters" />
       <module name="Gasto" options="-parameters" />
       <module name="Presupuesto" options="-parameters" />
+      <module name="Processing" options="-parameters" />
     </option>
   </component>
 </project>
