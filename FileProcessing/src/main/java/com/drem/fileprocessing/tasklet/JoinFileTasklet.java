@@ -1,56 +1,56 @@
 package com.drem.fileprocessing.tasklet;
 
+import com.azure.spring.cloud.core.resource.AzureStorageBlobProtocolResolver;
+import com.drem.fileprocessing.util.CrudFile;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
+import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.util.StreamUtils;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.FileVisitOption;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+
+import static com.drem.fileprocessing.util.constants.FileConstants.*;
 
 @Slf4j
-public class JoinFileTasklet implements Tasklet {
+public class JoinFileTasklet implements Tasklet, StepExecutionListener {
+
+    @Value("${spring.cloud.azure.storage.blob.container-name}")
+    private String containerName;
+    @Autowired
+    private ResourceLoader resourceLoader;
+    @Autowired
+    private AzureStorageBlobProtocolResolver azureStorageBlobProtocolResolver;
+
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
 
         log.info("entré aquí en el tasklet");
-        ClassPathResource resourceIn = new ClassPathResource("csv/input");
-        ClassPathResource resourceOut = new ClassPathResource("csv/input/GastosFileLoadData.csv");
 
-        Path inputDirectory = Path.of(resourceIn.getURI());
-        File outputFile = resourceOut.getFile();
+        Resource[] resources = azureStorageBlobProtocolResolver.getResources(
+                String.format(PATTERN_AZURE_BLOB, containerName, "*"));
+        log.info("{} resources founded with pattern:*.csv, \n all are: \n {}", resources.length, resources);
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
-            StringBuilder sb = new StringBuilder();
-            List<File> csvFiles = Files.walk(inputDirectory, FileVisitOption.FOLLOW_LINKS)
-                    .filter(path -> path.toString().endsWith(".csv") && !path.toString().endsWith("GastosFileLoadData.csv"))
-                    .map(Path::toFile)
-                    .collect(Collectors.toList());
+        StringBuilder sb = new StringBuilder();
+        sb.append(HEADER_CSV_CREATE);
 
-            csvFiles.stream()
-                    .map(csvFile -> {
-                        try {
-                            return Files.readAllLines(Path.of(csvFile.getPath()));
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .flatMap(a -> a.stream().map(s -> s.intern()))
-                    .forEach(a -> sb.append(a).append('\n'));
-
-            writer.write(sb.toString().trim());
-            writer.flush();
+        for (Resource resource : resources) {
+            InputStream a = resource.getInputStream();
+            log.info("el nombre del archivo leyendo es: {} ", resource.getFilename());
+            sb.append("\n");
+            sb.append(StreamUtils.copyToString(a, Charset.defaultCharset()));
         }
+
+        CrudFile.createNewFile(resourceLoader, containerName, CRETE_FILE_NAME, sb.toString().trim());
 
         return RepeatStatus.FINISHED;
     }
+
 }

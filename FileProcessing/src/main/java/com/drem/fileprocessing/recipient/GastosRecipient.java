@@ -10,5 +10,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GastosRecipient {
-    private String texto;
+    private String description;
+    private Double monto;
+    private String fecha;
+    private Integer usuario;
+    private Integer presupuesto;
 }
