@@ -8,11 +8,13 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="Presupuesto" />
+        <module name="AlmaceningFiles" />
         <module name="Gasto" />
         <module name="FileProcessing" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="AlmaceningFiles" target="17" />
       <module name="FileProcessing" target="17" />
       <module name="Gasto" target="17" />
       <module name="Presupuesto" target="17" />
@@ -21,6 +23,7 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="AlmaceningFiles" options="-parameters" />
       <module name="FileProcessing" options="-parameters" />
       <module name="Gasto" options="-parameters" />
       <module name="Presupuesto" options="-parameters" />
